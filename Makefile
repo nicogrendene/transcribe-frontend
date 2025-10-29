@@ -1,7 +1,7 @@
 # Makefile para Transcribe App
 # Aplicación de transcripción de videos con búsqueda semántica
 
-.PHONY: help install start stop restart status clean dev-backend dev-frontend dev-all
+.PHONY: help install start stop restart status clean dev-backend dev-frontend dev-all build preview prod
 
 # Variables
 BACKEND_DIR = ../transcribe-api
@@ -150,6 +150,21 @@ dev-all: ## Modo desarrollo: ambas aplicaciones (foreground)
 	@cd $(BACKEND_DIR) && $(BACKEND_CMD) & \
 	cd $(FRONTEND_DIR) && $(FRONTEND_CMD) & \
 	wait
+
+build: ## Compilar aplicación para producción
+	@echo "$(GREEN)Compilando aplicación para producción...$(NC)"
+	@npm run build
+	@echo "$(GREEN)✅ Build completado en ./dist$(NC)"
+
+preview: ## Previsualizar build de producción localmente
+	@echo "$(GREEN)Previsualizando build de producción...$(NC)"
+	@echo "$(YELLOW)Frontend: http://localhost:4173$(NC)"
+	@npm run preview
+
+prod: ## Modo producción: compilar y servir
+	@echo "$(GREEN)Modo producción - Compilando y sirviendo$(NC)"
+	@$(MAKE) build
+	@$(MAKE) preview
 
 # Comando por defecto
 .DEFAULT_GOAL := help

@@ -10,12 +10,6 @@ interface VideoListProps {
 }
 
 const VideoList: React.FC<VideoListProps> = ({ videos, selectedVideo, loading, onVideoSelect }) => {
-  const formatTime = (seconds: string) => {
-    const totalSeconds = parseInt(seconds)
-    const mins = Math.floor(totalSeconds / 60)
-    const secs = Math.floor(totalSeconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
 
   const formatDuration = (seconds: string) => {
     const totalSeconds = parseInt(seconds)

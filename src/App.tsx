@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import VideoList from './components/VideoList'
 import VideoPlayer from './components/VideoPlayer'
 import VideoSummary from './components/VideoSummary'
@@ -8,7 +8,7 @@ import ApiOfflineMessage from './components/ApiOfflineMessage'
 import { useApiStatus } from './hooks/useApiStatus'
 import { Video, Subtitle, SearchResult } from './types'
 import { parseWebVTT } from './utils/vttParser'
-import { getVideos, getVideoSubtitles, getVideoSummary, getVideoFile, getVideoThumbnail, searchVideos } from './config/api'
+import { getVideos, getVideoSubtitles, getVideoSummary, getVideoFile, searchVideos } from './config/api'
 
 function App() {
   const [videoList, setVideoList] = useState<Video[]>([])
@@ -16,10 +16,8 @@ function App() {
   const [subtitles, setSubtitles] = useState<Subtitle[]>([])
   const [videoSummary, setVideoSummary] = useState<string>('')
   const [currentTime, setCurrentTime] = useState<number>(0)
-  const [currentSubtitle, setCurrentSubtitle] = useState<string>('')
   const [videoStartTime, setVideoStartTime] = useState<number>(0)
   const [loading, setLoading] = useState(true)
-  const [loadingSubtitles, setLoadingSubtitles] = useState(false)
   const [loadingSummary, setLoadingSummary] = useState(false)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
@@ -44,10 +42,10 @@ function App() {
   useEffect(() => {
     // Mostrar subtítulo si hay subtítulos cargados
     if (subtitles.length > 0) {
-      const activeSubtitle = subtitles.find(sub => 
-        currentTime >= sub.start && currentTime <= sub.end
-      )
-      setCurrentSubtitle(activeSubtitle ? activeSubtitle.text : '')
+      // const activeSubtitle = subtitles.find(sub => 
+      //   currentTime >= sub.start && currentTime <= sub.end
+      // )
+      // setCurrentSubtitle(activeSubtitle ? activeSubtitle.text : '')
     }
   }, [currentTime, subtitles])
 
@@ -85,7 +83,6 @@ function App() {
 
 
   const loadSubtitles = async (videoId: string) => {
-    setLoadingSubtitles(true)
     try {
       const webvttText = await getVideoSubtitles(videoId)
       if (webvttText) {
@@ -96,8 +93,6 @@ function App() {
       }
     } catch (error) {
       setSubtitles([])
-    } finally {
-      setLoadingSubtitles(false)
     }
   }
 
@@ -119,12 +114,6 @@ function App() {
     }
   }
 
-  const formatTime = (seconds: string) => {
-    const totalSeconds = parseInt(seconds)
-    const mins = Math.floor(totalSeconds / 60)
-    const secs = Math.floor(totalSeconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
