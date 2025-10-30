@@ -171,7 +171,7 @@ function App() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img 
-                src="/logo-up.png" 
+                src="/tfg/logo-up.png" 
                 alt="Universidad de Palermo" 
                 className="w-12 h-12 object-contain filter-none drop-shadow-sm"
                 style={{ 

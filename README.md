@@ -6,16 +6,26 @@ Frontend React con shadcn/ui y Tailwind CSS para consumir la API de transcribe-a
 
 ```bash
 # Instalar dependencias
-npm install
+make install
 
 # Ejecutar en modo desarrollo
-npm run dev
+make dev
 
 # Construir para producción
-npm run build
+make build
 
 # Vista previa de producción
-npm run preview
+make preview
+```
+
+## 🚀 Comandos
+
+```bash
+# Ver todos los comandos disponibles
+make help
+
+# Limpiar archivos temporales
+make clean
 ```
 
 ## 📦 Tecnologías
