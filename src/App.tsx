@@ -13,6 +13,7 @@ import { getVideos, getVideoSubtitles, getVideoSummary, getVideoFile, searchVide
 function App() {
   const [videoList, setVideoList] = useState<Video[]>([])
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
+  const [selectedVideoData, setSelectedVideoData] = useState<Video | null>(null)
   const [subtitles, setSubtitles] = useState<Subtitle[]>([])
   const [videoSummary, setVideoSummary] = useState<string>('')
   const [currentTime, setCurrentTime] = useState<number>(0)
@@ -28,8 +29,14 @@ function App() {
   
   // Memoizar la URL del video para evitar re-renders innecesarios
   const currentVideoUrl = useMemo(() => {
-    return selectedVideo ? getVideoFile(selectedVideo) : null
-  }, [selectedVideo])
+    if (!selectedVideoData) return null
+    // Si el video tiene URL (puede ser YouTube u otra fuente), usarla
+    if (selectedVideoData.url) {
+      return selectedVideoData.url
+    }
+    // Si no, usar la URL de la API
+    return getVideoFile(selectedVideoData.id)
+  }, [selectedVideoData])
   
   // Hook personalizado para manejar el estado de la API
   const { apiOnline, apiStats } = useApiStatus()
@@ -70,6 +77,7 @@ function App() {
 
   const handleVideoSelect = async (video: Video) => {
     setSelectedVideo(video.id)
+    setSelectedVideoData(video) // Guardar el objeto video completo
     setVideoStartTime(0) // Resetear el tiempo de inicio
     
     // Cargar subtítulos y resumen en paralelo
@@ -122,10 +130,10 @@ function App() {
     try {
       const data = await searchVideos(searchQuery, 3)
       if (data) {
-        // Mapear 'id' a 'video_id' para mantener compatibilidad
+        // Mapear campos para mantener compatibilidad
         const mappedResults = (data.results || []).map((result: any) => ({
           ...result,
-          video_id: result.id
+          video_id: result.video_id || result.video || result.id // Usar video_id, video o id
         }))
         setSearchResults(mappedResults)
         setGeneratedAnswer(data.generated_answer || '')
@@ -142,20 +150,35 @@ function App() {
   }
 
   const handleResultClick = async (result: SearchResult) => {
-    if (result.video_id && result.video_id !== selectedVideo) {
-      const video = videoList.find(v => v.id === result.video_id)
+    const videoId = result.video_id || result.video
+    
+    // Si el resultado tiene URL, crear un objeto video temporal con esa URL
+    if (result.url) {
+      const video: Video = {
+        id: videoId || result.id,
+        title: result.title || 'Video',
+        source_file: result.source_file || '',
+        source: result.source || '',
+        location: '',
+        duration: '',
+        url: result.url // Usar la URL del resultado
+      }
+      await handleVideoSelect(video)
+    } else if (videoId && videoId !== selectedVideo) {
+      // Si no tiene URL pero tiene video_id, buscar en la lista
+      const video = videoList.find(v => v.id === videoId)
       if (video) {
         await handleVideoSelect(video)
       }
     }
     
-    // Actualizar el tiempo de inicio para el video de YouTube
+    // Actualizar el tiempo de inicio
     if (result.start_sec !== undefined) {
       setVideoStartTime(result.start_sec)
     }
     
-    // Para videos normales, usar la lógica existente
-    if (videoRef.current && result.start_sec !== undefined) {
+    // Para videos normales (no YouTube), usar la lógica existente
+    if (videoRef.current && result.start_sec !== undefined && !result.url?.includes('youtube')) {
       videoRef.current.currentTime = result.start_sec
       videoRef.current.play()
     }

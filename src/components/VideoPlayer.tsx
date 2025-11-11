@@ -15,8 +15,47 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({
   subtitles,
   startTime = 0
 }) => {
-  // Hack para demo: Si el video es el específico, usar YouTube embebido
-  const isDemoVideo = currentVideo && currentVideo.includes('01JF8K5EJX84S5J9SYG7Y2G8ZX')
+  // Detectar si es una URL de YouTube
+  const isYouTubeVideo = currentVideo && (
+    currentVideo.includes('youtube.com') || 
+    currentVideo.includes('youtu.be') ||
+    currentVideo.includes('youtube.com/embed')
+  )
+  
+  // Extraer ID de YouTube de diferentes formatos de URL
+  const getYouTubeEmbedUrl = (url: string): string => {
+    let videoId = ''
+    
+    // Formato: https://www.youtube.com/watch?v=VIDEO_ID
+    const watchMatch = url.match(/[?&]v=([^&]+)/)
+    if (watchMatch) {
+      videoId = watchMatch[1]
+    }
+    
+    // Formato: https://youtu.be/VIDEO_ID
+    const shortMatch = url.match(/youtu\.be\/([^?]+)/)
+    if (shortMatch) {
+      videoId = shortMatch[1]
+    }
+    
+    // Formato: https://www.youtube.com/embed/VIDEO_ID
+    const embedMatch = url.match(/embed\/([^?]+)/)
+    if (embedMatch) {
+      videoId = embedMatch[1]
+    }
+    
+    // Si ya es una URL de embed, devolverla tal cual
+    if (url.includes('youtube.com/embed')) {
+      return url.includes('?') ? `${url}&start=${Math.floor(startTime)}` : `${url}?start=${Math.floor(startTime)}`
+    }
+    
+    // Construir URL de embed con parámetros
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&start=${Math.floor(startTime)}&cc_load_policy=1`
+    }
+    
+    return url
+  }
   
   // Generar VTT dinámicamente
   const generateVTT = (subtitles: Array<{start: number, end: number, text: string}>) => {
@@ -59,12 +98,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({
   return (
     <div className="relative lg:col-span-2">
       {currentVideo ? (
-        isDemoVideo ? (
-          // Hack para demo: Video de YouTube embebido con tiempo específico y subtítulos encendidos
+        isYouTubeVideo ? (
+          // Video de YouTube embebido con tiempo específico y subtítulos encendidos
           <iframe
             className="w-full h-[600px] rounded-lg shadow-2xl"
-            src={`https://www.youtube.com/embed/ZdKU8P8swj8?autoplay=1&rel=0&modestbranding=1&start=${Math.floor(startTime)}&cc_load_policy=1`}
-            title="Video Demo - Diego Esteve"
+            src={getYouTubeEmbedUrl(currentVideo)}
+            title="Video de YouTube"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen

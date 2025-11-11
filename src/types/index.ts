@@ -5,6 +5,7 @@ export interface Video {
   source: string
   location: string
   duration: string
+  url?: string // URL del video (puede ser YouTube u otra fuente)
   metadata?: VideoMetadata
   qualities?: Quality[]
 }
@@ -46,6 +47,8 @@ export interface SearchResult {
   source?: string
   source_file?: string
   video_id?: string
+  video?: string // ID del video (alternativo a video_id)
+  url?: string // URL del video (puede ser YouTube u otra fuente)
   chunk_id?: string
 }
 
