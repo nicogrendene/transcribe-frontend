@@ -19,3 +19,8 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #374151;
 }
+
+/* Video player background - siempre negro */
+video {
+  background-color: #000000 !important;
+}

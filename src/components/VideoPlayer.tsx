@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react'
+import React, { useMemo, useEffect, useState } from 'react'
 
 interface VideoPlayerProps {
   currentVideo: string | null
@@ -15,6 +15,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({
   subtitles,
   startTime = 0
 }) => {
+  const [isLoading, setIsLoading] = useState(true)
+  const [iframeLoading, setIframeLoading] = useState(true)
   // Detectar si es una URL de YouTube
   const isYouTubeVideo = currentVideo && (
     currentVideo.includes('youtube.com') || 
@@ -86,6 +88,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({
     return URL.createObjectURL(vttBlob)
   }, [subtitles])
 
+  // Resetear estado de carga cuando cambia el video
+  useEffect(() => {
+    setIsLoading(true)
+    setIframeLoading(true)
+  }, [currentVideo])
+
   // Limpiar URLs de objeto cuando el componente se desmonte
   useEffect(() => {
     return () => {
@@ -100,38 +108,55 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({
       {currentVideo ? (
         isYouTubeVideo ? (
           // Video de YouTube embebido con tiempo específico y subtítulos encendidos
-          <iframe
-            className="w-full h-[600px] rounded-lg shadow-2xl"
-            src={getYouTubeEmbedUrl(currentVideo)}
-            title="Video de YouTube"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        ) : (
-          <video
-            ref={videoRef}
-            controls
-            className="w-full h-[600px] object-cover shadow-2xl"
-            src={currentVideo}
-            onTimeUpdate={onTimeUpdate}
-            preload="metadata"
-            playsInline
-          >
-            {vttUrl && (
-              <track
-                kind="captions"
-                src={vttUrl}
-                srcLang="es"
-                label="Español"
-                default
-              />
+          <div className="relative w-full h-[600px] bg-black rounded-lg shadow-2xl overflow-hidden">
+            {iframeLoading && (
+              <div className="absolute inset-0 bg-black z-10 flex items-center justify-center">
+                <div className="text-gray-400 text-sm">Cargando video...</div>
+              </div>
             )}
-            Tu navegador no soporta el elemento de video.
-          </video>
+            <iframe
+              className="w-full h-full"
+              src={getYouTubeEmbedUrl(currentVideo)}
+              title="Video de YouTube"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              onLoad={() => setIframeLoading(false)}
+            />
+          </div>
+        ) : (
+          <div className="relative w-full h-[600px] bg-black rounded-lg shadow-2xl overflow-hidden">
+            {isLoading && (
+              <div className="absolute inset-0 bg-black z-10 flex items-center justify-center">
+                <div className="text-gray-400 text-sm">Cargando video...</div>
+              </div>
+            )}
+            <video
+              ref={videoRef}
+              controls
+              className="w-full h-full object-cover bg-black"
+              src={currentVideo}
+              onTimeUpdate={onTimeUpdate}
+              onLoadedData={() => setIsLoading(false)}
+              onCanPlay={() => setIsLoading(false)}
+              preload="metadata"
+              playsInline
+            >
+              {vttUrl && (
+                <track
+                  kind="captions"
+                  src={vttUrl}
+                  srcLang="es"
+                  label="Español"
+                  default
+                />
+              )}
+              Tu navegador no soporta el elemento de video.
+            </video>
+          </div>
         )
       ) : (
-        <div className="w-full h-[600px] bg-gray-800/50 backdrop-blur-sm flex items-center justify-center text-gray-400 text-sm border border-gray-600/30">
+        <div className="w-full h-[600px] bg-black flex items-center justify-center text-gray-400 text-sm border border-gray-600/30">
           Selecciona un video
         </div>
       )}
