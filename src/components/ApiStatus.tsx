@@ -26,6 +26,11 @@ const ApiStatus: React.FC<ApiStatusProps> = ({ apiOnline, apiStats }) => {
         </span>
       </div>
       
+      <div className="flex items-center space-x-1">
+        <span className="text-xs text-gray-500">Versión:</span>
+        <span className="text-xs text-blue-400 font-medium">0.0.1-beta</span>
+      </div>
+      
       {apiOnline && apiStats && (
         <div className="flex items-center space-x-4 text-xs text-gray-400">
           {apiStats.total_vectores && (
