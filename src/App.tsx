@@ -8,7 +8,7 @@ import ApiOfflineMessage from './components/ApiOfflineMessage'
 import { useApiStatus } from './hooks/useApiStatus'
 import { Video, Subtitle, SearchResult } from './types'
 import { parseWebVTT } from './utils/vttParser'
-import { getVideos, getVideoSubtitles, getVideoSummary, getVideoFile, searchVideos } from './config/api'
+import { getVideos, getVideoSubtitles, getVideoSummary, searchVideos } from './config/api'
 
 function App() {
   const [videoList, setVideoList] = useState<Video[]>([])
@@ -16,7 +16,6 @@ function App() {
   const [selectedVideoData, setSelectedVideoData] = useState<Video | null>(null)
   const [subtitles, setSubtitles] = useState<Subtitle[]>([])
   const [videoSummary, setVideoSummary] = useState<string>('')
-  const [currentTime, setCurrentTime] = useState<number>(0)
   const [videoStartTime, setVideoStartTime] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const [loadingSummary, setLoadingSummary] = useState(false)
@@ -27,15 +26,10 @@ function App() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const isLoadingVideos = useRef(false)
   
-  // Memoizar la URL del video para evitar re-renders innecesarios
+  // Obtener la URL del video (siempre HLS desde el backend)
   const currentVideoUrl = useMemo(() => {
     if (!selectedVideoData) return null
-    // Si el video tiene URL (puede ser YouTube u otra fuente), usarla
-    if (selectedVideoData.url) {
-      return selectedVideoData.url
-    }
-    // Si no, usar la URL de la API
-    return getVideoFile(selectedVideoData.id)
+    return selectedVideoData.url || null
   }, [selectedVideoData])
   
   // Hook personalizado para manejar el estado de la API
@@ -46,15 +40,6 @@ function App() {
     loadVideos()
   }, [])
 
-  useEffect(() => {
-    // Mostrar subtítulo si hay subtítulos cargados
-    if (subtitles.length > 0) {
-      // const activeSubtitle = subtitles.find(sub => 
-      //   currentTime >= sub.start && currentTime <= sub.end
-      // )
-      // setCurrentSubtitle(activeSubtitle ? activeSubtitle.text : '')
-    }
-  }, [currentTime, subtitles])
 
   const loadVideos = async () => {
     if (isLoadingVideos.current) return // Evitar llamadas duplicadas
@@ -75,10 +60,10 @@ function App() {
     }
   }
 
-  const handleVideoSelect = async (video: Video) => {
+  const handleVideoSelect = async (video: Video, startTime?: number) => {
     setSelectedVideo(video.id)
     setSelectedVideoData(video) // Guardar el objeto video completo
-    setVideoStartTime(0) // Resetear el tiempo de inicio
+    setVideoStartTime(startTime || 0) // Establecer el tiempo de inicio si se proporciona
     
     // Cargar subtítulos y resumen en paralelo
     await Promise.all([
@@ -151,6 +136,9 @@ function App() {
 
   const handleResultClick = async (result: SearchResult) => {
     const videoId = result.video_id || result.video
+    // Usar start_sec de la API de búsqueda
+    const startTime = result.start_sec ?? 0
+    
     
     // Si el resultado tiene URL, crear un objeto video temporal con esa URL
     if (result.url) {
@@ -163,24 +151,16 @@ function App() {
         duration: '',
         url: result.url // Usar la URL del resultado
       }
-      await handleVideoSelect(video)
+      await handleVideoSelect(video, startTime)
     } else if (videoId && videoId !== selectedVideo) {
       // Si no tiene URL pero tiene video_id, buscar en la lista
       const video = videoList.find(v => v.id === videoId)
       if (video) {
-        await handleVideoSelect(video)
+        await handleVideoSelect(video, startTime)
       }
-    }
-    
-    // Actualizar el tiempo de inicio
-    if (result.start_sec !== undefined) {
+    } else if (videoId === selectedVideo && result.start_sec !== undefined) {
+      // Si es el mismo video, solo actualizar el tiempo de inicio
       setVideoStartTime(result.start_sec)
-    }
-    
-    // Para videos normales (no YouTube), usar la lógica existente
-    if (videoRef.current && result.start_sec !== undefined && !result.url?.includes('youtube')) {
-      videoRef.current.currentTime = result.start_sec
-      videoRef.current.play()
     }
   }
 
@@ -232,10 +212,7 @@ function App() {
               <VideoPlayer
                 currentVideo={currentVideoUrl}
                 videoRef={videoRef}
-                onTimeUpdate={(e) => {
-                  const video = e.target as HTMLVideoElement
-                  setCurrentTime(video.currentTime)
-                }}
+                onTimeUpdate={() => {}}
                 subtitles={subtitles}
                 startTime={videoStartTime}
               />

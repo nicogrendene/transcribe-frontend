@@ -110,15 +110,12 @@ const VideoList: React.FC<VideoListProps> = ({ videos, selectedVideo, loading, o
 
                 {/* Video Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-sm text-white line-clamp-2 group-hover:text-blue-400 transition-colors">
+                  <h3 
+                    className="font-medium text-sm text-white line-clamp-3 group-hover:text-blue-400 transition-colors"
+                    title={video.title}
+                  >
                     {video.title}
                   </h3>
-                  <div className="mt-1 text-xs text-gray-500">
-                    {video.title.includes('Diego Esteve') 
-                      ? 'Conferencia sobre Zero Trust y ciberseguridad'
-                      : 'Video educativo'
-                    }
-                  </div>
                   <div className="mt-1 text-xs text-gray-400">
                     {video.source || 'Universidad de Palermo'}
                   </div>

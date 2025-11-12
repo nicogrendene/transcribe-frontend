@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, memo } from 'react'
 import { getVideoThumbnail } from '../config/api'
 import { SearchResult } from '../types'
 
@@ -8,7 +8,7 @@ interface SearchResultsProps {
   showTitle?: boolean
 }
 
-const SearchResults: React.FC<SearchResultsProps> = ({ results, onResultClick, showTitle = true }) => {
+const SearchResults: React.FC<SearchResultsProps> = memo(({ results, onResultClick, showTitle = true }) => {
   if (results.length === 0) return null
 
   const formatTime = (seconds: number) => {
@@ -45,9 +45,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onResultClick, s
         }}
       >
         {results.map((result, index) => {
-          console.log('SearchResult:', result)
           return (
-            <div key={index}>
+            <div key={result.id || `result-${index}`}>
             <div
               onClick={() => onResultClick(result)}
               className="group cursor-pointer transition-all duration-200 hover:bg-gray-700/50 p-3"
@@ -58,7 +57,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onResultClick, s
               <div className="flex space-x-3">
                 {/* Thumbnail */}
                 <div className="relative flex-shrink-0">
-                  {result.id ? (
+                  {resultThumbnails[result.video_id || result.id] ? (
                     <img 
                       src={resultThumbnails[result.video_id || result.id]}
                       alt={result.text}
@@ -67,12 +66,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onResultClick, s
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
                         const parent = target.parentElement;
-                        if (parent) {
-                          parent.innerHTML = `
-                            <div class="w-40 h-24 bg-gradient-to-br from-blue-700 to-blue-800 rounded-lg flex items-center justify-center">
-                              <div class="text-2xl">🎬</div>
-                            </div>
-                          `;
+                        if (parent && !parent.querySelector('.fallback-thumbnail')) {
+                          const fallback = document.createElement('div');
+                          fallback.className = 'fallback-thumbnail w-40 h-24 bg-gradient-to-br from-blue-700 to-blue-800 rounded-lg flex items-center justify-center';
+                          fallback.innerHTML = '<div class="text-2xl">🎬</div>';
+                          parent.appendChild(fallback);
                         }
                       }}
                     />
@@ -117,6 +115,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onResultClick, s
       </div>
     </div>
   )
-}
+})
+
+SearchResults.displayName = 'SearchResults'
 
 export default SearchResults
